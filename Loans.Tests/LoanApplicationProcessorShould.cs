@@ -34,7 +34,7 @@ namespace Loans.Tests
             var application = new LoanApplication(42, product, amount, "Sarah", 25, "133 Pluralsight Drive, Draper, Utah", 65_000m);
 
             var mockIdentityVerifier = new Mock<IIdentityVerifier>();
-            //mockIdentityVerifier.Setup(x => x.Validate("Sarah", 25, "133 Pluralsight Drive, Draper, Utah")).Returns(true);
+            mockIdentityVerifier.Setup(x => x.Validate("Sarah", 25, "133 Pluralsight Drive, Draper, Utah")).Returns(true);
 
             // Any Parameter
             //mockIdentityVerifier.Setup(x => x.Validate(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>())).Returns(true);
@@ -44,18 +44,34 @@ namespace Loans.Tests
             //mockIdentityVerifier.Setup(x => x.Validate("Sarah", 25, "133 Pluralsight Drive, Draper, Utah", out isValidOutValue));
 
             // ref value
-            mockIdentityVerifier.Setup(x => x.Validate("Sarah", 25, "133 Pluralsight Drive, Draper, Utah", ref It.Ref<IdentityVerificationStatus>.IsAny))
-                .Callback(new ValidateCallback(
-                    (string applicantName, int applicantAge, string applicantAddress, ref IdentityVerificationStatus status)
-                => status = new IdentityVerificationStatus(true)));
+            //mockIdentityVerifier.Setup(x => x.Validate("Sarah", 25, "133 Pluralsight Drive, Draper, Utah", ref It.Ref<IdentityVerificationStatus>.IsAny))
+            //    .Callback(new ValidateCallback(
+            //        (string applicantName, int applicantAge, string applicantAddress, ref IdentityVerificationStatus status)
+            //    => status = new IdentityVerificationStatus(true)));
 
             var mockCreditScorer = new Mock<ICreditScorer>();
+
+            // Property Hierarchy
+            //var mockScoreValue = new Mock<ScoreValue>();
+            //mockScoreValue.Setup(x => x.Score).Returns(300);
+            //var mockScoreResult = new Mock<ScoreResult>();
+            //mockScoreResult.Setup(x => x.ScoreValue).Returns(mockScoreValue.Object);
+            //mockCreditScorer.Setup(x => x.ScoreResult).Returns(mockScoreResult.Object);
+
+            // Individual property
+            //mockCreditScorer.Setup(x => x.Score).Returns(300);
+
+            mockCreditScorer.SetupAllProperties();
+
+            mockCreditScorer.Setup(x => x.ScoreResult.ScoreValue.Score).Returns(300);
+            mockCreditScorer.SetupProperty(x => x.Count);
 
             var sut = new LoanApplicationProcessor(mockIdentityVerifier.Object, mockCreditScorer.Object);
 
             sut.Process(application);
 
             Assert.That(application.GetIsAccepted(), Is.True);
+            Assert.That(mockCreditScorer.Object.Count, Is.EqualTo(1));
         }
 
         [Test]
@@ -63,7 +79,7 @@ namespace Loans.Tests
         {
             var mock = new Mock<INullExample>();
             mock.Setup(x => x.SomeMethod());
-                //.Returns<string>(null);
+            //.Returns<string>(null);
 
             string mockReturnValue = mock.Object.SomeMethod();
 

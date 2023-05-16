@@ -38,42 +38,47 @@ namespace Loans.Domain.Applications
 
             _identityVerifier.Initialize();
 
-            //var isValidIdentity = _identityVerifier.Validate(application.GetApplicantName(), 
-            //                                                 application.GetApplicantAge(), 
-            //                                                 application.GetApplicantAddress());
+            var isValidIdentity = _identityVerifier.Validate(application.GetApplicantName(),
+                                                             application.GetApplicantAge(),
+                                                             application.GetApplicantAddress());
 
+            // Out parameter code
             //_identityVerifier.Validate(application.GetApplicantName(),
             //                                                 application.GetApplicantAge(),
             //                                                 application.GetApplicantAddress(),
             //                                                 out var isValidIdentity);
 
-            //if (!isValidIdentity)
-            //{
-            //    application.Decline();
-            //    return;
-            //}
-
-            IdentityVerificationStatus status = null;
-
-            _identityVerifier.Validate(application.GetApplicantName(),
-                application.GetApplicantAge(),
-                application.GetApplicantAddress(),
-                ref status);
-
-            if (!status.Passed)
+            if (!isValidIdentity)
             {
                 application.Decline();
                 return;
             }
 
-            //_creditScorer.CalculateScore(application.GetApplicantName(), 
-            //                             application.GetApplicantAddress());
+            // Ref parameter code
+            //IdentityVerificationStatus status = null;
 
-            //if (_creditScorer.Score < MinimumCreditScore)
+            //_identityVerifier.Validate(application.GetApplicantName(),
+            //    application.GetApplicantAge(),
+            //    application.GetApplicantAddress(),
+            //    ref status);
+
+            //if (!status.Passed)
             //{
             //    application.Decline();
             //    return;
             //}
+
+            _creditScorer.CalculateScore(application.GetApplicantName(),
+                                         application.GetApplicantAddress());
+
+            _creditScorer.Count++;
+
+            //if (_creditScorer.Score < MinimumCreditScore)
+            if (_creditScorer.ScoreResult.ScoreValue.Score < MinimumCreditScore)
+            {
+                application.Decline();
+                return;
+            }
 
             application.Accept();
         }
