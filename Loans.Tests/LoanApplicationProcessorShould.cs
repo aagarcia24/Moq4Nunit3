@@ -70,8 +70,57 @@ namespace Loans.Tests
 
             sut.Process(application);
 
+            mockCreditScorer.VerifyGet(x => x.ScoreResult.ScoreValue.Score, Times.Once);
+            //mockCreditScorer.VerifySet(x => x.Count = It.IsAny<int>(), Times.Once); // Code duplication with the assert that checks the Count property
+            //mockCreditScorer.VerifySet(x => x.Count = 1);
+
             Assert.That(application.GetIsAccepted(), Is.True);
             Assert.That(mockCreditScorer.Object.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void InitializeIdentityVerifier()
+        {
+            LoanProduct product = new LoanProduct(99, "Loan", 5.25m);
+            LoanAmount amount = new LoanAmount("USD", 200_000m);
+            var application = new LoanApplication(42, product, amount, "Sarah", 25, "133 Pluralsight Drive, Draper, Utah", 65_000m);
+
+            var mockIdentityVerifier = new Mock<IIdentityVerifier>();
+            mockIdentityVerifier.Setup(x => x.Validate("Sarah", 25, "133 Pluralsight Drive, Draper, Utah")).Returns(true);
+
+            var mockCreditScorer = new Mock<ICreditScorer>();
+            mockCreditScorer.Setup(x => x.ScoreResult.ScoreValue.Score).Returns(300);
+
+            var sut = new LoanApplicationProcessor(mockIdentityVerifier.Object, mockCreditScorer.Object);
+
+            sut.Process(application);
+
+            mockIdentityVerifier.Verify(x => x.Initialize());
+            mockIdentityVerifier.Verify(x => x.Validate(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()));
+
+            mockIdentityVerifier.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public void CalculateScore()
+        {
+            LoanProduct product = new LoanProduct(99, "Loan", 5.25m);
+            LoanAmount amount = new LoanAmount("USD", 200_000m);
+            var application = new LoanApplication(42, product, amount, "Sarah", 25, "133 Pluralsight Drive, Draper, Utah", 65_000m);
+
+            var mockIdentityVerifier = new Mock<IIdentityVerifier>();
+            mockIdentityVerifier.Setup(x => x.Validate("Sarah", 25, "133 Pluralsight Drive, Draper, Utah")).Returns(true);
+
+            var mockCreditScorer = new Mock<ICreditScorer>();
+            mockCreditScorer.Setup(x => x.ScoreResult.ScoreValue.Score).Returns(300);
+
+            var sut = new LoanApplicationProcessor(mockIdentityVerifier.Object, mockCreditScorer.Object);
+
+            sut.Process(application);
+
+            mockCreditScorer.Verify(x => x.CalculateScore("Sarah", "133 Pluralsight Drive, Draper, Utah"));
+            //mockCreditScorer.Verify(x => x.CalculateScore("Sarah", "133 Pluralsight Drive, Draper, Utah"), Times.Once);
+            //mockCreditScorer.Verify(x => x.CalculateScore(It.IsAny<string>(), It.IsAny<string>()));
         }
 
         [Test]
